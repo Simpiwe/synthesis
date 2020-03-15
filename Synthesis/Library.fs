@@ -75,19 +75,67 @@ let month = function
 let toBinary i =
     let toBinary = function | 0 -> "0" | _ -> "1"
     let rec toBinaryAll i = 
-        match digits i with
-        | 1 -> toBinary i
-        | _ -> toBinaryAll (i / 10) + toBinary (i % 10)
+        match i with
+        | 0 -> ""
+        | _ ->  toBinaryAll (i / 2) + toBinary (i % 2)
 
     match i < 0 with
     | true -> failwith "This function only accepts positive numbers."
-    | _ -> toBinaryAll i
+    | _ -> match i = 0 with
+           | true -> "0"
+           | false -> toBinaryAll i
 
 let bizFuzz n =
-    failwith "Not implemented"
+    let checkDiv i =
+        match i % 3 = 0 && i % 5 = 0 with
+        | true -> (1, 1, 1)
+        | false -> match (i % 3 = 0, i % 5 = 0)  with
+                   | true, false -> (1, 0, 0)
+                   | false, true -> (0, 1, 0)
+                   | _ -> (0, 0, 0)
 
-let monthDay _ _ =
-    failwith "Not implemented"
+    let rec bizFuzz i n acc =
+        match i > n with
+        | true -> acc
+        | _ -> match acc, checkDiv i with
+               | (a, b, c), (d, e,f) -> bizFuzz (i + 1) n (a + d, b + e, c + f)
+    
+    bizFuzz 1 n (0, 0, 0)
 
-let coord _ =
-    failwith "Not implemented"
+let monthDay d y =
+    let leap = isLeap y
+    let rec getDay i totalDays =
+        let delta = match leap && i = 2 with | true -> 1 | _ -> 0
+        match d <= totalDays + delta  with
+        | true -> match month i with
+                    | (mon, _) -> mon
+        | false -> match month (i + 1) with
+                    | (_, days) -> getDay (i + 1) (totalDays + days + delta)
+    match leap with
+    | true -> match 1 <= d && d <= 366 with
+                | false -> failwith ""
+                | true -> getDay 1 31
+    | false ->match 1 <= d && d <= 365 with
+                | false -> failwith ""
+                | true -> getDay 1 31
+
+let coord (x,y) =
+    let sqrt n =
+        let rec calc i guess =
+            match i with
+            | 15 -> guess
+            | _ ->
+                let g = (guess + n / guess) / 2.0
+                calc (i + 1) g
+        match n <= 0.0 with
+        | true -> failwith "Only square roots of positive numbers may be taken."
+        | false -> calc 0 (n / 2.0)
+            
+    let dist (x1, y1) =
+        sqrt (((x - x1) * (x - x1)) + ((y - y1) * (y - y1)))
+    let containsInitial (x1, y1) w h =
+        match x - x1 >= 0.0 &&  x - x1 <= w, y1 - y >= 0.0 &&  y1 - y <= h with
+        | true, true -> true
+        | _ -> false
+    
+    dist, containsInitial
